@@ -40,8 +40,6 @@ import shutil
 import socket
 import exodata
 import exodata.astroquantities as aq
-import seaborn
-seaborn.reset_orig()
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -56,3 +54,6 @@ from astropy.coordinates import get_sun as astrosun
 from sklearn.decomposition import FastICA, PCA
 from matplotlib import rc
 
+if int(matplotlib.__version__[0]) < 3:
+    import seaborn
+    seaborn.reset_orig()
