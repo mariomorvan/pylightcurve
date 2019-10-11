@@ -138,8 +138,14 @@ class TransitAndPolyFitting:
         self.print_names.append('ldc_1')
         self.initial.append(self.limb_darkening_coefficients[0])
         if self.fit_ld:
-            self.limits1.append(0.000001)
-            self.limits2.append(0.999999)
+            if isinstance(fit_ld, list):
+                try:
+                    self.limits1.append(fit_ld[0][0])
+                    self.limits2.append(fit_ld[0][1])
+                except:
+                    print('problem when trying to get bounds for first ld coef, defaulting.')
+                    self.limits1.append(0.000001)
+                    self.limits2.append(0.999999)
         else:
             self.limits1.append(np.nan)
             self.limits2.append(np.nan)
@@ -150,8 +156,13 @@ class TransitAndPolyFitting:
             self.print_names.append('ldc_2')
             self.initial.append(self.limb_darkening_coefficients[1])
             if self.fit_ld:
-                self.limits1.append(0.000001)
-                self.limits2.append(0.999999)
+                try:
+                    self.limits1.append(fit_ld[1][0])
+                    self.limits2.append(fit_ld[1][1])
+                except:
+                    print('problem when trying to get bounds for first ld coef, defaulting.')
+                    self.limits1.append(0.000001)
+                    self.limits2.append(0.999999)
             else:
                 self.limits1.append(np.nan)
                 self.limits2.append(np.nan)
@@ -162,8 +173,13 @@ class TransitAndPolyFitting:
             self.print_names.append('ldc_3')
             self.initial.append(self.limb_darkening_coefficients[2])
             if self.fit_ld:
-                self.limits1.append(0.000001)
-                self.limits2.append(0.999999)
+                try:
+                    self.limits1.append(fit_ld[2][0])
+                    self.limits2.append(fit_ld[2][1])
+                except:
+                    print('problem when trying to get bounds for first ld coef, defaulting.')
+                    self.limits1.append(0.000001)
+                    self.limits2.append(0.999999)
             else:
                 self.limits1.append(np.nan)
                 self.limits2.append(np.nan)
@@ -172,8 +188,13 @@ class TransitAndPolyFitting:
             self.print_names.append('ldc_4')
             self.initial.append(self.limb_darkening_coefficients[3])
             if self.fit_ld:
-                self.limits1.append(0.000001)
-                self.limits2.append(0.999999)
+                try:
+                    self.limits1.append(fit_ld[3][0])
+                    self.limits2.append(fit_ld[3][1])
+                except:
+                    print('problem when trying to get bounds for first ld coef, defaulting.')
+                    self.limits1.append(0.000001)
+                    self.limits2.append(0.999999)
             else:
                 self.limits1.append(np.nan)
                 self.limits2.append(np.nan)
