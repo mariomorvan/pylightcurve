@@ -16,6 +16,7 @@ class TransitAndPolyFitting:
                  exp_time=0, time_factor=1, fit_first_order=False, fit_second_order=False,
                  fit_rp_over_rs=False, fit_period=False, fit_sma_over_rs=False,
                  fit_eccentricity=False, fit_inclination=False, fit_periastron=False, fit_mid_time=False,
+                 fit_ld = False,
                  counter=True, counter_window=False):
 
         # TODO check input parameters
@@ -25,7 +26,6 @@ class TransitAndPolyFitting:
 
         self.method = method
         self.limb_darkening_coefficients = limb_darkening_coefficients
-        self.fit_ld = False
 
         if isinstance(self.limb_darkening_coefficients, str):
             if self.limb_darkening_coefficients == 'fit':
@@ -66,6 +66,7 @@ class TransitAndPolyFitting:
         self.fit_inclination = fit_inclination
         self.fit_periastron = fit_periastron
         self.fit_mid_time = fit_mid_time
+        self.fit_ld = fit_ld
 
         self.iterations = iterations
         self.walkers = walkers
