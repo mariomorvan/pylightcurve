@@ -1,6 +1,4 @@
-import pytest
-
-from pylightcurve.analysis_gauss_numerical_integration_torch import *
+from pylightcurve.utils import param_sampler, ldc_sampler
 from pylightcurve.exoplanet_lc_torch import *
 from pylightcurve.exoplanet_orbit_torch import *
 torch.set_default_dtype(torch.float64)
@@ -20,28 +18,13 @@ ldc = {
 }
 
 
-def param_sampler(out_numpy=False, out_scalar=False, seed=None, dtype=torch.get_default_dtype()):
-    if seed is None:
-        seed = np.random.randint(10e6)
-    torch.manual_seed(seed)
-    period = torch.rand(1, dtype=dtype) * 10
-    sma_over_rs = torch.rand(1, dtype=dtype) * 10 + 1
-    eccentricity = torch.rand(1, dtype=dtype)
-    inclination = 90 + (torch.rand(1, dtype=dtype) - 0.5) * 2
-    periastron = torch.rand(1, dtype=dtype) * 360
-    mid_time = torch.rand(1, dtype=dtype) * period
-    params = period, sma_over_rs, eccentricity, inclination, periastron, mid_time
-    if out_numpy:
-        return tuple([p.numpy() for p in params])
-    if out_scalar:
-        return tuple([p.item() for p in params])
-    return params
+
 
 def test_exoplanet_orbit():
     time_array = torch.linspace(0, 10, 20)
 
     # Scalar inputs
-    period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True)
+    _, _, period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True)
     #period, sma_over_rs, eccentricity, inclination, periastron, mid_time = 1, 2, 0, 0, 0, 0
     positions = exoplanet_orbit(period, sma_over_rs, eccentricity, inclination, periastron, mid_time, time_array)
 
@@ -53,9 +36,9 @@ def test_exoplanet_orbit():
         assert np.allclose(positions[i].numpy(), positions_np[i])
 
     # TENSOR inputs
-    period, sma_over_rs, eccentricity, inclination, periastron, mid_time  = param_sampler(seed=0)
+    _, _, period, sma_over_rs, eccentricity, inclination, periastron, mid_time  = param_sampler(seed=0)
     positions = exoplanet_orbit(period, sma_over_rs, eccentricity, inclination, periastron, mid_time, time_array)
-    period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True, seed=0)
+    _, _, period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True, seed=0)
     positions_np = eo_np(period, sma_over_rs, eccentricity, inclination, periastron, mid_time, time_array.numpy())
     for i in range(len(positions)):
         assert np.allclose(positions[i].numpy(), positions_np[i])
@@ -64,7 +47,7 @@ def test_transit_projected_distance():
     time_array = torch.linspace(0, 10, 20)
 
     # Scalar inputs
-    period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True)
+    _, _, period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True)
     distances = transit_projected_distance(period, sma_over_rs, eccentricity,
                                            inclination, periastron, mid_time, time_array)
     assert isinstance(distances, torch.Tensor)
@@ -76,7 +59,7 @@ def test_transit_projected_distance():
     assert np.allclose(distances.numpy(), distances_np, atol=1.e-7)
 
     # Tensor inputs
-    period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler()
+    _, _, period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler()
     distances = transit_projected_distance(period, sma_over_rs, eccentricity, inclination, periastron, mid_time,
                                            time_array)
     assert isinstance(distances, torch.Tensor)
@@ -84,13 +67,12 @@ def test_transit_projected_distance():
 
 def test_transit_duration():
     # Scalar value
-    period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True)
-    rp_over_rs = np.random.rand()
+    rp_over_rs, _, period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True)
     duration = transit_duration(rp_over_rs, period, sma_over_rs, inclination, eccentricity, periastron)
     assert isinstance(duration, float)
 
     # Tensor inputs
-    period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler()
+    rp_over_rs, _, period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler()
     duration = transit_duration(rp_over_rs, period, sma_over_rs, inclination, eccentricity, periastron)
     assert isinstance(duration, torch.Tensor)
 
@@ -166,16 +148,15 @@ def test_transit_flux_drop():
 def test_transit():
     from pylightcurve.exoplanet_lc import transit as transit_np
     time_array = torch.linspace(0, 10, 20)
-    rp_over_rs = torch.rand(1)
 
     for method in ldc_torch:
 
-        period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(seed=1)
+        rp_over_rs, _, period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(seed=1)
         result = transit(method, ldc[method], rp_over_rs, period, sma_over_rs, eccentricity, inclination, periastron,
                          mid_time, time_array, precision=3)
 
-        period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True, seed=1)
-        result_np = transit_np(method, ldc[method], rp_over_rs.item(), period, sma_over_rs, eccentricity, inclination, periastron,
+        rp_over_rs, _, period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True, seed=1)
+        result_np = transit_np(method, ldc[method], rp_over_rs, period, sma_over_rs, eccentricity, inclination, periastron,
                   mid_time, time_array.numpy(), precision=3)
 
         assert np.allclose(result.numpy(), result_np)
@@ -185,11 +166,10 @@ def test_transit_perf():
     import time
     from pylightcurve.exoplanet_lc import transit as transit_np
     time_array = torch.linspace(0, 10, 100)
-    rp_over_rs = torch.rand(1)
 
     for method in ldc_torch:
         seed = 0 #np.random.randint(0)
-        period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(seed=seed)
+        rp_over_rs, _ , period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(seed=seed)
 
         t0 = time.time()
         for i in range(100):
@@ -198,10 +178,10 @@ def test_transit_perf():
                     mid_time, time_array, precision=3)
         dur_torch = time.time() - t0
 
-        period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True, seed=seed)
+        rp_over_rs, _ ,period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True, seed=seed)
         t0 = time.time()
         for i in range(100):
-            transit_np(method, ldc[method], rp_over_rs.item(), period, sma_over_rs, eccentricity, inclination,
+            transit_np(method, ldc[method], rp_over_rs, period, sma_over_rs, eccentricity, inclination,
                                    periastron,
                                    mid_time, time_array.numpy(), precision=3)
         dur_np = time.time() - t0
@@ -214,15 +194,13 @@ def test_transit_perf():
 def test_eclipse():
     from pylightcurve.exoplanet_lc import eclipse as eclipse_np
     time_array = torch.linspace(0, 10, 20)
-    rp_over_rs = torch.rand(1)
-    fp_over_fs = torch.rand(1)
 
-    period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(seed=1)
+    rp_over_rs, fp_over_fs, period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(seed=1)
     result = eclipse(fp_over_fs, rp_over_rs, period, sma_over_rs, eccentricity, inclination, periastron,
                      mid_time, time_array, precision=3)
 
-    period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True, seed=1)
-    result_np = eclipse_np(fp_over_fs.item(), rp_over_rs.item(), period, sma_over_rs, eccentricity, inclination, periastron,
+    rp_over_rs, fp_over_fs, period, sma_over_rs, eccentricity, inclination, periastron, mid_time = param_sampler(out_scalar=True, seed=1)
+    result_np = eclipse_np(fp_over_fs, rp_over_rs, period, sma_over_rs, eccentricity, inclination, periastron,
               mid_time, time_array.numpy(), precision=3)
 
     assert np.allclose(result.numpy(), result_np)
