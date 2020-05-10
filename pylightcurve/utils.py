@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+
 torch.set_default_dtype(torch.float64)
 
 
@@ -16,16 +17,19 @@ def param_sampler(*size, out_numpy=False, out_scalar=False, return_dict=False,
     if not size:
         size = 1
     torch.manual_seed(seed)
-    rp_over_rs = torch.rand(size, dtype=dtype, requires_grad=requires_grad) / 10
-    fp_over_fs = torch.rand(size, dtype=dtype, requires_grad=requires_grad) / 10
-    period = torch.rand(size, dtype=dtype, requires_grad=requires_grad) * 10
-    sma_over_rs = torch.rand(size, dtype=dtype, requires_grad=requires_grad) * 10 + 1
+    rp_over_rs = torch.rand(size, dtype=dtype) / 10
+    fp_over_fs = torch.rand(size, dtype=dtype) / 10
+    period = torch.rand(size, dtype=dtype) * 10
+    sma_over_rs = torch.rand(size, dtype=dtype) * 10 + 1
     eccentricity = torch.rand(size, dtype=dtype)
-    inclination = 90 + (torch.rand(size, dtype=dtype, requires_grad=requires_grad) - 0.5) * 4
-    periastron = torch.rand(size, dtype=dtype, requires_grad=requires_grad) * 360
-    mid_time = torch.rand(size, dtype=dtype, requires_grad=requires_grad) * period
-
+    inclination = 90 + (torch.rand(size, dtype=dtype) - 0.5) * 4
+    periastron = torch.rand(size, dtype=dtype) * 360
+    mid_time = torch.rand(size, dtype=dtype) * period
     params = rp_over_rs, fp_over_fs, period, sma_over_rs, eccentricity, inclination, periastron, mid_time
+    if requires_grad:
+        for p in params:
+            p.requires_grad = True
+        params[-1].retain_grad()
     if out_numpy:
         params = tuple([p.numpy() for p in params])
     elif out_scalar:

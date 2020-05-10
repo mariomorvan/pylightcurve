@@ -4,8 +4,11 @@ from __future__ import print_function
 
 from .analysis_gauss_numerical_integration_torch import *
 from .exoplanet_orbit_torch import *
-import torch
+
 torch.set_default_dtype(torch.float64)
+
+EPS = 1.e-16
+#TODO: Investigate the impact of EPS
 
 
 def integral_r_claret(limb_darkening_coefficients, r):
@@ -27,7 +30,7 @@ def num_claret(r, limb_darkening_coefficients, rprs, z):
     mu24 = torch.sqrt(mu44)
     mu14 = torch.sqrt(mu24)
     return ((1.0 - a1 - a2 - a3 - a4) + a1 * mu14 + a2 * mu24 + a3 * mu24 * mu14 + a4 * mu44) \
-        * r * torch.acos(np.minimum((-rprs ** 2 + z * z + rsq) / (2.0 * z * r), 1.0))
+           * r * torch.acos(torch.clamp((-rprs ** 2 + z * z + rsq) / (2.0 * z * r), max=1.0 - EPS))
 
 
 def integral_r_f_claret(limb_darkening_coefficients, rprs, z, r1, r2, precision=3):
@@ -47,7 +50,7 @@ def num_linear(r, limb_darkening_coefficients, rprs, z):
     a1 = limb_darkening_coefficients[0]
     rsq = r * r
     return (1.0 - a1 * (1.0 - torch.sqrt(1.0 - rsq))) \
-        * r * torch.acos(torch.clamp((-rprs ** 2 + z * z + rsq) / (2.0 * z * r), max=1.0))
+           * r * torch.acos(torch.clamp((-rprs ** 2 + z * z + rsq) / (2.0 * z * r), max=1.0 - EPS))
 
 
 def integral_r_f_linear(limb_darkening_coefficients, rprs, z, r1, r2, precision=3):
@@ -69,7 +72,7 @@ def num_quad(r, limb_darkening_coefficients, rprs, z):
     rsq = r * r
     cc = 1.0 - torch.sqrt(1.0 - rsq)
     return (1.0 - a1 * cc - a2 * cc * cc) \
-        * r * torch.acos(np.minimum((-rprs ** 2 + z * z + rsq) / (2.0 * z * r), 1.0))
+           * r * torch.acos(torch.clamp((-rprs ** 2 + z * z + rsq) / (2.0 * z * r), max=1.0 - EPS))
 
 
 def integral_r_f_quad(limb_darkening_coefficients, rprs, z, r1, r2, precision=3):
@@ -91,7 +94,7 @@ def num_sqrt_torch(r, limb_darkening_coefficients, rprs, z):
     rsq = r * r
     mu = torch.sqrt(1.0 - rsq)
     return (1.0 - a1 * (1 - mu) - a2 * (1.0 - torch.sqrt(mu))) \
-        * r * torch.acos(np.minimum((-rprs ** 2 + z * z + rsq) / (2.0 * z * r), 1.0))
+           * r * torch.acos(torch.clamp((-rprs ** 2 + z * z + rsq) / (2.0 * z * r), max=1.0 - EPS))
 
 
 def integral_r_f_sqrt_torch(limb_darkening_coefficients, rprs, z, r1, r2, precision=3):
@@ -122,6 +125,7 @@ num = {
     'sqrt': num_sqrt_torch
 }
 
+
 def integral_centred(method, limb_darkening_coefficients, rprs, ww1, ww2):
     return (integral_r[method](limb_darkening_coefficients, rprs)
             - integral_r[method](limb_darkening_coefficients, torch.zeros(1))) * torch.abs(ww2 - ww1)
@@ -130,10 +134,10 @@ def integral_centred(method, limb_darkening_coefficients, rprs, ww1, ww2):
 def integral_plus_core(method, limb_darkening_coefficients, rprs, z, ww1, ww2, precision=3):
     if len(z) == 0:
         return z
-    rr1 = z * torch.cos(ww1) + torch.sqrt(torch.clamp(rprs ** 2 - (z * torch.sin(ww1)) ** 2, 0))
-    rr1 = torch.clamp(rr1, 0, 1)
-    rr2 = z * torch.cos(ww2) + torch.sqrt(torch.clamp(rprs ** 2 - (z * torch.sin(ww2)) ** 2, 0))
-    rr2 = torch.clamp(rr2, 0, 1)
+    rr1 = z * torch.cos(ww1) + torch.sqrt(torch.clamp(rprs ** 2 - (z * torch.sin(ww1)) ** 2, EPS))
+    rr1 = torch.clamp(rr1, EPS, 1 - EPS)
+    rr2 = z * torch.cos(ww2) + torch.sqrt(torch.clamp(rprs ** 2 - (z * torch.sin(ww2)) ** 2, EPS))
+    rr2 = torch.clamp(rr2, EPS, 1 - EPS)
     w1 = torch.min(ww1, ww2)
     r1 = torch.min(rr1, rr2)
     w2 = torch.max(ww1, ww2)
@@ -148,10 +152,10 @@ def integral_plus_core(method, limb_darkening_coefficients, rprs, z, ww1, ww2, p
 def integral_minus_core(method, limb_darkening_coefficients, rprs, z, ww1, ww2, precision=3):
     if len(z) == 0:
         return z
-    rr1 = z * torch.cos(ww1) - torch.sqrt(torch.clamp(rprs ** 2 - (z * torch.sin(ww1)) ** 2, 0))
-    rr1 = torch.clamp(rr1, 0, 1)
-    rr2 = z * torch.cos(ww2) - torch.sqrt(torch.clamp(rprs ** 2 - (z * torch.sin(ww2)) ** 2, 0))
-    rr2 = torch.clamp(rr2, 0, 1)
+    rr1 = z * torch.cos(ww1) - torch.sqrt(torch.clamp(rprs ** 2 - (z * torch.sin(ww1)) ** 2, EPS))
+    rr1 = torch.clamp(rr1, EPS, 1 - EPS)
+    rr2 = z * torch.cos(ww2) - torch.sqrt(torch.clamp(rprs ** 2 - (z * torch.sin(ww2)) ** 2, EPS))
+    rr2 = torch.clamp(rr2, EPS, 1 - EPS)
     w1 = torch.min(ww1, ww2)
     r1 = torch.min(rr1, rr2)
     w2 = torch.max(ww1, ww2)
@@ -164,7 +168,6 @@ def integral_minus_core(method, limb_darkening_coefficients, rprs, z, ww1, ww2, 
 
 
 def transit_flux_drop(method, limb_darkening_coefficients, rp_over_rs, z_over_rs, precision=3):
-
     if len(z_over_rs) == 0:
         return torch.Tensor([])
 
@@ -191,8 +194,8 @@ def transit_flux_drop(method, limb_darkening_coefficients, rp_over_rs, z_over_rs
     star_case = torch.cat((case5[0], case6[0], case7[0], casea[0], casec[0]))
 
     # cross points
-    ph = torch.acos(torch.clamp((1.0 - rp_over_rs ** 2 + zsq) / (2.0 * z_over_rs), -1, 1))
-    theta_1 = torch.zeros(len(z_over_rs))
+    ph = torch.acos(torch.clamp((1.0 - rp_over_rs ** 2 + zsq) / (2.0 * z_over_rs), min=-(1 - EPS), max=1 - EPS))
+    theta_1 = torch.zeros_like(z_over_rs)
     ph_case = torch.cat((case5[0], casea[0], casec[0]))
     theta_1[ph_case] = ph[ph_case]
     theta_2 = torch.asin(torch.min(rp_over_rs / z_over_rs, torch.ones_like(z_over_rs)))
@@ -203,23 +206,25 @@ def transit_flux_drop(method, limb_darkening_coefficients, rp_over_rs, z_over_rs
     theta_2[case7] = ph[case7]
 
     # flux_upper
-    plusflux = torch.zeros(len(z_over_rs))
+    plusflux = torch.zeros_like(z_over_rs)
 
     plusflux[plus_case] = integral_plus_core(method, limb_darkening_coefficients, rp_over_rs, z_over_rs[plus_case],
                                              theta_1[plus_case], theta_2[plus_case], precision=precision)
     if len(case0[0]) > 0:
-         plusflux[case0] = integral_centred(method, limb_darkening_coefficients, rp_over_rs, torch.zeros(1), np.pi)
+        plusflux[case0] = integral_centred(method, limb_darkening_coefficients, rp_over_rs, torch.zeros(1), np.pi)
     if len(caseb[0]) > 0:
-         plusflux[caseb] = integral_centred(method, limb_darkening_coefficients, torch.ones(1), torch.zeros(1), np.pi)
+        plusflux[caseb] = integral_centred(method, limb_darkening_coefficients, torch.ones(1), torch.zeros(1), np.pi)
 
     # flux_lower
-    minsflux = torch.zeros(len(z_over_rs))
+    minsflux = torch.zeros_like(z_over_rs)
     minsflux[minus_case] = integral_minus_core(method, limb_darkening_coefficients, rp_over_rs,
-                                               z_over_rs[minus_case], torch.zeros(1), theta_2[minus_case], precision=precision)
+                                               z_over_rs[minus_case], torch.zeros(1), theta_2[minus_case],
+                                               precision=precision)
 
     # flux_star
-    starflux = torch.zeros(len(z_over_rs))
-    starflux[star_case] = integral_centred(method, limb_darkening_coefficients, torch.ones(1), torch.zeros(1), ph[star_case])
+    starflux = torch.zeros_like(z_over_rs)
+    starflux[star_case] = integral_centred(method, limb_darkening_coefficients, torch.ones(1), torch.zeros(1),
+                                           ph[star_case])
 
     # flux_total
     total_flux = integral_centred(method, limb_darkening_coefficients, torch.ones(1), torch.zeros(1), 2.0 * np.pi)
@@ -229,7 +234,6 @@ def transit_flux_drop(method, limb_darkening_coefficients, rp_over_rs, z_over_rs
 
 def transit(method, limb_darkening_coefficients, rp_over_rs, period, sma_over_rs, eccentricity, inclination, periastron,
             mid_time, time_array, precision=3):
-
     position_vector = exoplanet_orbit(period, sma_over_rs, eccentricity, inclination, periastron, mid_time, time_array)
 
     projected_distance = torch.where(
@@ -241,13 +245,12 @@ def transit(method, limb_darkening_coefficients, rp_over_rs, period, sma_over_rs
 
 def eclipse(fp_over_fs, rp_over_rs, period, sma_over_rs, eccentricity, inclination, periastron, mid_time, time_array,
             precision=3):
-
     position_vector = exoplanet_orbit(period, - sma_over_rs / rp_over_rs, eccentricity, inclination, periastron,
                                       mid_time, time_array)
 
     projected_distance = torch.where(
         position_vector[0] < 0, 1.0 + 5.0 / rp_over_rs,
-        np.sqrt(position_vector[1] * position_vector[1] + position_vector[2] * position_vector[2]))
+        torch.sqrt(position_vector[1] * position_vector[1] + position_vector[2] * position_vector[2]))
 
     return (1.0 + fp_over_fs * transit_flux_drop('claret', [0, 0, 0, 0], 1 / rp_over_rs, projected_distance,
                                                  precision=precision)) / (1.0 + fp_over_fs)
