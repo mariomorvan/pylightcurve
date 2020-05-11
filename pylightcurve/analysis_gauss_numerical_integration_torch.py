@@ -251,7 +251,7 @@ def gauss_numerical_integration(f, x1, x2, precision, *f_args):
     x1, x2 = (x2 - x1) / 2, (x2 + x1) / 2
 
     return x1 * torch.sum(gauss_table[precision][0][:, None].to(device=x1.device) *
-                          f(x1[None, :] * gauss_table[precision][1][:, None] + x2[None, :].to(device=x1.device), *f_args),
+                          f(x1[None, :] * gauss_table[precision][1][:, None].to(device=x1.device) + x2[None, :], *f_args),
                           0)  # TODO: maybe better to avoid conversion?
 
 
