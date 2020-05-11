@@ -1,9 +1,13 @@
+import pytest
+
 from pylightcurve.exoplanet_lc_torch import *
 from pylightcurve.exoplanet_orbit_torch import *
 from pylightcurve.utils import param_sampler
 
 torch.set_default_dtype(torch.float64)
 
+
+# TODO : generate ealistic ldc, and from a sampler instead
 ldc_torch = {
     'claret': torch.rand(4),
     'linear': torch.rand(1),
@@ -224,3 +228,17 @@ def test_eclipse_grad():
     for p, v in param_dict.items():
         grad_p = v.grad
         assert grad_p is not None and not torch.isnan(grad_p).item()
+
+
+
+def test_gpu():
+    if not torch.cuda.is_available():
+        pytest.skip('no gpu available')
+
+    time_array = torch.linspace(0, 10, 20).cuda()
+    param_dict = param_sampler(requires_grad=True, return_dict=True, device='cuda')
+
+    # Transit
+    param_dict.pop('fp_over_fs')
+    flux = transit('linear', ldc['linear'], time_array=time_array, **param_dict, precision=3)
+
