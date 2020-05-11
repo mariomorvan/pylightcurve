@@ -42,16 +42,20 @@ def param_sampler(*size, out_numpy=False, out_scalar=False, return_dict=False,
     return params
 
 
-def ldc_sampler(method='claret', out_list=False, seed=None, requires_grad=False):
+def ldc_sampler(method='claret', out_list=False, seed=None, dtype=None, requires_grad=False, device=None):
     if seed is None:
         seed = np.random.randint(10e6)
     torch.manual_seed(seed)
+    if dtype is None:
+        dtype = torch.get_default_dtype()
     if method == "claret":
-        out = torch.rand(4, requires_grad=requires_grad)
+        out = torch.rand(4, dtype=dtype, device=device)
     elif method == "linear":
-        out = torch.rand(1, requires_grad=requires_grad)
+        out = torch.rand(1, dtype=dtype, device=device)
     elif method == "quad" or method == 'sqrt':
-        out = torch.rand(2, requires_grad=requires_grad)
+        out = torch.rand(2, dtype=dtype, device=device)
     if out_list:
         out = out.numpy().tolist()
+    elif requires_grad:
+        out.requires_grad = True
     return out
