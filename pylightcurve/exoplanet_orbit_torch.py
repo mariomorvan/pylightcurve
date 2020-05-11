@@ -10,11 +10,14 @@ torch.set_default_dtype(torch.float64)
 
 
 def exoplanet_orbit(period, sma_over_rs, eccentricity, inclination, periastron, mid_time, time_array,
-                    ww=torch.zeros(1)):
+                    ww=None):
     if torch.isnan(periastron):
-        periastron = torch.zeros(1)
+        periastron = period.new_zeros(1)
     inclination = inclination * np.pi / 180.0
     periastron = periastron * np.pi / 180.0
+    if ww is None:
+        ww = period.new_zeros(1)
+
     ww = ww * np.pi / 180.0
 
     if eccentricity == 0 and ww == 0:

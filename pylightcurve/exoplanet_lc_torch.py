@@ -128,7 +128,7 @@ num = {
 
 def integral_centred(method, limb_darkening_coefficients, rprs, ww1, ww2):
     return (integral_r[method](limb_darkening_coefficients, rprs)
-            - integral_r[method](limb_darkening_coefficients, torch.zeros(1))) * torch.abs(ww2 - ww1)
+            - integral_r[method](limb_darkening_coefficients, rprs.new_zeros(1))) * torch.abs(ww2 - ww1)
 
 
 def integral_plus_core(method, limb_darkening_coefficients, rprs, z, ww1, ww2, precision=3):
@@ -142,7 +142,7 @@ def integral_plus_core(method, limb_darkening_coefficients, rprs, z, ww1, ww2, p
     r1 = torch.min(rr1, rr2)
     w2 = torch.max(ww1, ww2)
     r2 = torch.max(rr1, rr2)
-    parta = integral_r[method](limb_darkening_coefficients, torch.zeros(1)) * (w1 - w2)
+    parta = integral_r[method](limb_darkening_coefficients, rprs.new_zeros(1)) * (w1 - w2)
     partb = integral_r[method](limb_darkening_coefficients, r1) * w2
     partc = integral_r[method](limb_darkening_coefficients, r2) * (-w1)
     partd = integral_r_f[method](limb_darkening_coefficients, rprs, z, r1, r2, precision=precision)
@@ -160,7 +160,7 @@ def integral_minus_core(method, limb_darkening_coefficients, rprs, z, ww1, ww2, 
     r1 = torch.min(rr1, rr2)
     w2 = torch.max(ww1, ww2)
     r2 = torch.max(rr1, rr2)
-    parta = integral_r[method](limb_darkening_coefficients, torch.zeros(1)) * (w1 - w2)
+    parta = integral_r[method](limb_darkening_coefficients, rprs.new_zeros(1)) * (w1 - w2)
     partb = integral_r[method](limb_darkening_coefficients, r1) * (-w1)
     partc = integral_r[method](limb_darkening_coefficients, r2) * w2
     partd = integral_r_f[method](limb_darkening_coefficients, rprs, z, r1, r2, precision=precision)
@@ -211,23 +211,23 @@ def transit_flux_drop(method, limb_darkening_coefficients, rp_over_rs, z_over_rs
     plusflux[plus_case] = integral_plus_core(method, limb_darkening_coefficients, rp_over_rs, z_over_rs[plus_case],
                                              theta_1[plus_case], theta_2[plus_case], precision=precision)
     if len(case0[0]) > 0:
-        plusflux[case0] = integral_centred(method, limb_darkening_coefficients, rp_over_rs, torch.zeros(1), np.pi)
+        plusflux[case0] = integral_centred(method, limb_darkening_coefficients, rp_over_rs, rp_over_rs.new_zeros(1), np.pi)
     if len(caseb[0]) > 0:
-        plusflux[caseb] = integral_centred(method, limb_darkening_coefficients, torch.ones(1), torch.zeros(1), np.pi)
+        plusflux[caseb] = integral_centred(method, limb_darkening_coefficients, rp_over_rs.new_ones(1), rp_over_rs.new_zeros(1), np.pi)
 
     # flux_lower
     minsflux = torch.zeros_like(z_over_rs)
     minsflux[minus_case] = integral_minus_core(method, limb_darkening_coefficients, rp_over_rs,
-                                               z_over_rs[minus_case], torch.zeros(1), theta_2[minus_case],
+                                               z_over_rs[minus_case], rp_over_rs.new_zeros(1), theta_2[minus_case],
                                                precision=precision)
 
     # flux_star
     starflux = torch.zeros_like(z_over_rs)
-    starflux[star_case] = integral_centred(method, limb_darkening_coefficients, torch.ones(1), torch.zeros(1),
+    starflux[star_case] = integral_centred(method, limb_darkening_coefficients, rp_over_rs.new_ones(1), rp_over_rs.new_zeros(1),
                                            ph[star_case])
 
     # flux_total
-    total_flux = integral_centred(method, limb_darkening_coefficients, torch.ones(1), torch.zeros(1), 2.0 * np.pi)
+    total_flux = integral_centred(method, limb_darkening_coefficients, rp_over_rs.new_ones(1), rp_over_rs.new_zeros(1), 2.0 * np.pi)
 
     return 1 - (2.0 / total_flux) * (plusflux + starflux - minsflux)
 
