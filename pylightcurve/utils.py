@@ -5,7 +5,7 @@ torch.set_default_dtype(torch.float64)
 
 
 def param_sampler(*size, out_numpy=False, out_scalar=False, return_dict=False,
-                  seed=None, dtype=torch.get_default_dtype(), requires_grad=False):
+                  seed=None, dtype=torch.get_default_dtype(), requires_grad=False, device=None):
     """
     returned params:  rp_over_rs, fp_over_fs, period, sma_over_rs, eccentricity, inclination, periastron, mid_time
     tuple by default, dict if return_dict is set to True
@@ -17,14 +17,14 @@ def param_sampler(*size, out_numpy=False, out_scalar=False, return_dict=False,
     if not size:
         size = 1
     torch.manual_seed(seed)
-    rp_over_rs = torch.rand(size, dtype=dtype) / 10
-    fp_over_fs = torch.rand(size, dtype=dtype) / 10
-    period = torch.rand(size, dtype=dtype) * 10
-    sma_over_rs = torch.rand(size, dtype=dtype) * 10 + 1
-    eccentricity = torch.rand(size, dtype=dtype)
-    inclination = 90 + (torch.rand(size, dtype=dtype) - 0.5) * 4
-    periastron = torch.rand(size, dtype=dtype) * 360
-    mid_time = torch.rand(size, dtype=dtype) * period
+    rp_over_rs = torch.rand(size, dtype=dtype, device=device) / 10
+    fp_over_fs = torch.rand(size, dtype=dtype, device=device) / 10
+    period = torch.rand(size, dtype=dtype, device=device) * 10
+    sma_over_rs = torch.rand(size, dtype=dtype, device=device) * 10 + 1
+    eccentricity = torch.rand(size, dtype=dtype, device=device)
+    inclination = 90 + (torch.rand(size, dtype=dtype, device=device) - 0.5) * 4
+    periastron = torch.rand(size, dtype=dtype, device=device) * 360
+    mid_time = torch.rand(size, dtype=dtype, device=device) * period
     params = rp_over_rs, fp_over_fs, period, sma_over_rs, eccentricity, inclination, periastron, mid_time
     if requires_grad:
         for p in params:
