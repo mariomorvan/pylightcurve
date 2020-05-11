@@ -255,7 +255,7 @@ def gauss_numerical_integration(f, x1, x2, precision, *f_args):
                           0)  # TODO: maybe better to avoid conversion?
 
 
-def sample_functiimpon(f, precision=3):
+def sample_function(f, precision=3):
     def sampled_function(x12_array, *args):
         x1_array, x2_array = x12_array
 
