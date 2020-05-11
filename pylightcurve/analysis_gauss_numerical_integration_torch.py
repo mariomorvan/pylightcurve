@@ -250,9 +250,9 @@ gauss_table = [torch.transpose(gauss0, 0, 1), torch.transpose(gauss10, 0, 1), to
 def gauss_numerical_integration(f, x1, x2, precision, *f_args):
     x1, x2 = (x2 - x1) / 2, (x2 + x1) / 2
 
-    return x1 * torch.sum(gauss_table[precision][0][:, None] *
-                          f(x1[None, :] * gauss_table[precision][1][:, None] + x2[None, :], *f_args),
-                          0).to(device=x1.device)  # TODO: maybe better to avoid conversion?
+    return x1 * torch.sum(gauss_table[precision][0][:, None].to(device=x1.device) *
+                          f(x1[None, :] * gauss_table[precision][1][:, None] + x2[None, :].to(device=x1.device), *f_args),
+                          0)  # TODO: maybe better to avoid conversion?
 
 
 def sample_functiimpon(f, precision=3):
